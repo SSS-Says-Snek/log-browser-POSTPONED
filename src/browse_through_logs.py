@@ -1,6 +1,16 @@
-import glob
-import os
+"""
+A simple log browser to browse my log entries I made through the years.
+Code is super messy, just a note to future me who stumbles across this atrocity
 
+
+First Created: Jun 9th, 2021
+Version 0.1
+Age: 13
+"""
+
+import glob
+
+import os
 import sys
 
 from PyQt5.QtWidgets import (
@@ -18,11 +28,11 @@ from PyQt5.QtWidgets import QGridLayout, QVBoxLayout
 __version__ = "0.1"
 path = '.'
 
-all_dirs = [
-    i for i in os.listdir() if os.path.isdir(os.path.join(path, i))
-]
-
-all_dirs.sort()
+all_dirs = sorted([
+    i for i in os.listdir() if os.path.isdir(os.path.join(path, i)) \
+                            and i != "✰ Yearly Capsule ✰"
+])
+annual_log_dir = os.path.join(path, "✰ Yearly Capsule ✰")
 
 
 class HomeLayout(QWidget):
@@ -42,6 +52,8 @@ class HomeLayout(QWidget):
         self.year_label = QLabel("<h3>Year to Browse:</h3>")
         self.daily_log_button = QPushButton("Daily Logs", self)
         self.daily_log_button_label = QLabel("<h3>Click here to search:</h3>")
+        self.annual_log_button = QPushButton("Annual Logs", self)
+        self.annual_log_button_label = QLabel("<h3>Click here to view annual logs:</h3>")
         self.year_combobox = QComboBox(self)
         
         self.year_combobox.currentTextChanged.connect(self.change_text)
@@ -57,6 +69,8 @@ class HomeLayout(QWidget):
         self.layout.addWidget(self.year_combobox, 2, 1)
         self.layout.addWidget(self.daily_log_button_label, 3, 0)
         self.layout.addWidget(self.daily_log_button, 3, 1)
+        self.layout.addWidget(self.annual_log_button_label, 4, 0)
+        self.layout.addWidget(self.annual_log_button, 4, 1)
 
         self.setLayout(self.layout)
 
@@ -80,7 +94,7 @@ class HomeLayout(QWidget):
         ]
 
         for file in files:
-            with open(file) as file_read:
+            with open(file, encoding='utf8') as file_read:
                 content = file_read.read()
             self.daily_log_class.logs.append(content)
 
