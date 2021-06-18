@@ -60,6 +60,9 @@ class HomeLayout(QWidget):
         self.daily_log_button.clicked.connect(
             self.change_to_daily_log
         )
+        self.annual_log_button.clicked.connect(
+            self.change_to_annual_log
+        )
 
         self.year_combobox.addItems(all_dirs)
 
@@ -118,6 +121,12 @@ class HomeLayout(QWidget):
         self.daily_log_class.log_msg.setPlainText(self.daily_log_class.current_log)
 
         self.mainwindow.change_layout(self.mainwindow.dailylog)
+
+    def change_to_annual_log(self):
+        QMessageBox.about(
+            self, "E",
+            "Not done kek"
+        )
         
 
 class DailyLogLayout(QWidget):
