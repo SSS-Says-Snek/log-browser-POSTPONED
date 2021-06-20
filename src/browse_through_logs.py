@@ -20,7 +20,9 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QPlainTextEdit,
     QComboBox,
-    QMessageBox
+    QMessageBox,
+    QInputDialog,
+    QLineEdit
 )
 
 from PyQt5.QtWidgets import QGridLayout, QVBoxLayout
@@ -34,9 +36,11 @@ all_dirs = sorted([
 ])
 annual_log_dir = os.path.join(path, "✰ Yearly Capsule ✰")
 
+authorized_annual_log = {"layout": False, "text": False}
+
 
 class HomeLayout(QWidget):
-    def __init__(self, mainwindow, daily_log_class):
+    def __init__(self, mainwindow, daily_log_class, annual_log_class):
         super().__init__()
         self.mainwindow = mainwindow
         self.layout = QGridLayout()
@@ -123,10 +127,24 @@ class HomeLayout(QWidget):
         self.mainwindow.change_layout(self.mainwindow.dailylog)
 
     def change_to_annual_log(self):
-        QMessageBox.about(
-            self, "E",
-            "Not done kek"
-        )
+        # QMessageBox.about(
+        #     self, "E",
+        #     "Not done kek"
+        # )
+        if not authorized_annual_log["layout"]:
+            text, ok = QInputDialog().getText(
+                self, "Password", "Enter Hex Password:"
+            )
+            if text == '790c03848c09f5e2ebaa702b4bd0d6db' and ok:
+                self.mainwindow.change_layout(self.mainwindow.annuallog)
+                authorized_annual_log["layout"] = True
+            else:
+                QMessageBox.about(
+                    self, "Incorrect Password",
+                    "AHAAAHaHAHAHHAHAH WRONG PASSWORD"
+                )
+        else:
+            self.mainwindow.change_layout(self.mainwindow.annuallog)
         
 
 class DailyLogLayout(QWidget):
@@ -169,7 +187,7 @@ class DailyLogLayout(QWidget):
         self.layout.addWidget(self.log_info, 2, 0, 1, 4)
 
     def setup(self):
-        self.mainwindow.setWindowTitle("Log Browser")
+        self.mainwindow.setWindowTitle("Daily Log Browser")
 
     def next_log(self):
         if self.log_index + 1 < len(self.logs):
@@ -222,6 +240,25 @@ class DailyLogLayout(QWidget):
         )
 
 
+class AnnualLogLayout(QWidget):
+    def __init__(self, mainwindow):
+        super().__init__()
+
+        self.mainwindow = mainwindow
+
+        self.layout = QGridLayout()
+        self.setLayout(self.layout)
+
+        self.home_button = QPushButton("Home")
+
+        self.home_button.clicked.connect(lambda: self.mainwindow.change_layout(self.mainwindow.home))
+
+        self.layout.addWidget(self.home_button, 0, 0)
+        
+    def setup(self):
+        self.mainwindow.setWindowTitle("Annual Log Browser")
+
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -232,11 +269,13 @@ class MainWindow(QWidget):
         self.setLayout(self.layout)
 
         self.dailylog = DailyLogLayout(self)
-        self.home = HomeLayout(self, self.dailylog)
+        self.annuallog = AnnualLogLayout(self)
+        self.home = HomeLayout(self, self.dailylog, self.annuallog)
         self.layout.addWidget(self.home)
         self.layout.addWidget(self.dailylog)
+        self.layout.addWidget(self.annuallog)
 
-        self.layouts = (self.home, self.dailylog)
+        self.layouts = (self.home, self.dailylog, self.annuallog)
 
         self.change_layout(self.home)
 
