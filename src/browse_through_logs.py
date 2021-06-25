@@ -93,6 +93,7 @@ class HomeLayout(QWidget):
         self.daily_log_class.logs = []
 
         combobox_text = str(self.year_combobox.currentText())
+        self.daily_log_class.year = int(combobox_text)
 
         files = [
             os.path.join(path, combobox_text, i) \
@@ -165,6 +166,7 @@ class DailyLogLayout(QWidget):
         self.last_log_button = QPushButton("Last Log")
         self.home_button = QPushButton("Home")
         self.help_button = QPushButton("Help")
+        self.refresh_logs_button = QPushButton("Refresh Logs")
         self.log_info = QLabel()
 
         self.home_button.clicked.connect(lambda: self.mainwindow.change_layout(self.mainwindow.home))
@@ -173,6 +175,7 @@ class DailyLogLayout(QWidget):
         self.prev_log_button.clicked.connect(self.prev_log)
         self.first_log_button.clicked.connect(self.first_log)
         self.last_log_button.clicked.connect(self.last_log)
+        self.refresh_logs_button.clicked.connect(self.refresh_logs)
         
         self.log_msg.setOverwriteMode(True)
         
@@ -185,6 +188,7 @@ class DailyLogLayout(QWidget):
         self.layout.addWidget(self.help_button, 0, 1)
         self.layout.addWidget(self.log_msg, 1, 0, 1, 4)
         self.layout.addWidget(self.log_info, 2, 0, 1, 4)
+        self.layout.addWidget(self.refresh_logs_button, 2, 3)
 
     def setup(self):
         self.mainwindow.setWindowTitle("Daily Log Browser")
@@ -239,6 +243,44 @@ class DailyLogLayout(QWidget):
             "\"It's a feature, not a bug\" lol"
         )
 
+    def refresh_logs(self):
+        self.logs = []
+
+        files = [
+            os.path.join(path, str(self.year), i) \
+            for i in os.listdir(str(self.year)) \
+            if os.path.isfile(os.path.join(path, str(self.year), i))
+        ]
+
+        for file in files:
+            with open(file, encoding='utf8') as file_read:
+                content = file_read.read()
+            self.logs.append(content)
+
+        len_logs = len(self.logs)
+
+        if len_logs == 0 or len_logs > 1:
+            verbose = "logs"
+        else:
+            verbose = "log"
+        
+        self.hello_msg.setText(
+            f"<h1>{len(self.logs)} {verbose} for {self.year}"
+        )
+
+        if len(self.logs) > 0:
+            self.log_info.setText(f"<h2>Log 1/{len(self.logs)}")
+        else:
+            self.logs.append('No Logs for this year.')
+            self.log_info.setText(f"<h2>Log 0/0")
+        self.current_log = self.logs[0]
+        self.log_msg.setPlainText(self.current_log)
+
+        QMessageBox.about(
+            self, "Refresh Successful",
+            f"Successfully refreshed logs for {self.year}"
+        )
+
 
 class AnnualLogLayout(QWidget):
     def __init__(self, mainwindow):
@@ -249,11 +291,42 @@ class AnnualLogLayout(QWidget):
         self.layout = QGridLayout()
         self.setLayout(self.layout)
 
+        # self.home_button = QPushButton("Home")
+
+        # self.home_button.clicked.connect(lambda: self.mainwindow.change_layout(self.mainwindow.home))
+
+        # self.layout.addWidget(self.home_button, 0, 0)
+
+        self.log_index = 0
+
+        self.hello_msg = QLabel()
+        self.log_msg = QPlainTextEdit()
+        self.next_log_button = QPushButton("Next Log")
+        self.prev_log_button = QPushButton("Previous Log")
+        self.first_log_button = QPushButton("First Log")
+        self.last_log_button = QPushButton("Last Log")
         self.home_button = QPushButton("Home")
+        self.help_button = QPushButton("Help")
+        self.log_info = QLabel()
 
         self.home_button.clicked.connect(lambda: self.mainwindow.change_layout(self.mainwindow.home))
-
+        # self.help_button.clicked.connect(self.help_popup)
+        # self.next_log_button.clicked.connect(self.next_log)
+        # self.prev_log_button.clicked.connect(self.prev_log)
+        # self.first_log_button.clicked.connect(self.first_log)
+        # self.last_log_button.clicked.connect(self.last_log)
+        
+        self.log_msg.setOverwriteMode(True)
+        
+        self.layout.addWidget(self.hello_msg, 0, 2)
+        self.layout.addWidget(self.next_log_button, 3, 2)
+        self.layout.addWidget(self.prev_log_button, 3, 1)
+        self.layout.addWidget(self.first_log_button, 3, 0)
+        self.layout.addWidget(self.last_log_button, 3, 3)
         self.layout.addWidget(self.home_button, 0, 0)
+        self.layout.addWidget(self.help_button, 0, 1)
+        self.layout.addWidget(self.log_msg, 1, 0, 1, 4)
+        self.layout.addWidget(self.log_info, 2, 0, 1, 4)
         
     def setup(self):
         self.mainwindow.setWindowTitle("Annual Log Browser")
@@ -290,7 +363,7 @@ class MainWindow(QWidget):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
-    mw = MainWindow()
-    mw.show()
+    main_window = MainWindow()
+    main_window.show()
 
     sys.exit(app.exec_())
