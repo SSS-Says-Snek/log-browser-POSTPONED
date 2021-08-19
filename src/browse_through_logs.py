@@ -28,13 +28,17 @@ from PyQt5.QtWidgets import (
 
 from PyQt5.QtWidgets import QGridLayout, QVBoxLayout
 
+import matplotlib.pyplot as plt
+
 __version__ = "0.1"
 path = '.'
 
-all_dirs = sorted([
-    i for i in os.listdir() if os.path.isdir(os.path.join(path, i)) \
-                            and i != "✰ Yearly Capsule ✰"
-])
+all_dirs = sorted(
+    [
+        i for i in os.listdir() if os.path.isdir(os.path.join(path, i))
+                                   and i != "✰ Yearly Capsule ✰"
+    ]
+)
 
 all_data = {
     year: {
@@ -45,37 +49,39 @@ all_data = {
                         os.path.join(year, i)
                     ).st_ctime
                 ) for i in os.listdir(
-                    os.path.join(
-                        year
-                    )
+                os.path.join(
+                    year
                 )
+            )
             ],
             [
                 open(
                     os.path.join(
                         year, filepath
-                        ), encoding='latin1'
-                    ).read() for filepath in os.listdir(
-                        os.path.join(
-                            year
-                            )
-                        ) if filepath.split(
-                        '.'
-                        )[-1] not in [
-                            'png', 'jpg', 'jpeg'
-                        ] 
-                ]
-            )
-        } for year in os.listdir(
-            
-        ) if year != "✰ Yearly Capsule ✰" and os.path.isdir(
-            year
-            )
+                    ), encoding='latin1'
+                ).read() for filepath in os.listdir(
+                os.path.join(
+                    year
+                )
+            ) if filepath.split(
+                '.'
+            )[-1] not in [
+                     'png', 'jpg', 'jpeg'
+                 ]
+            ]
+        )
+    } for year in os.listdir(
+
+    ) if os.path.isdir(
+        year
+    )
 }
 
 annual_log_dir = os.path.join(path, "✰ Yearly Capsule ✰")
 
 authorized_annual_log = {"layout": False, "text": False}
+
+plt.style.use('seaborn')
 
 
 def format_byte(size: int, decimal_places: int = 3):
@@ -114,7 +120,7 @@ class HomeLayout(QWidget):
         self.year_combobox = QComboBox(self)
 
         self.stat_button = QPushButton("Stats")
-        
+
         self.year_combobox.currentTextChanged.connect(self.change_text)
         self.daily_log_button.clicked.connect(
             self.change_to_daily_log
@@ -173,7 +179,7 @@ class HomeLayout(QWidget):
             verbose = "logs"
         else:
             verbose = "log"
-        
+
         self.daily_log_class.hello_msg.setText(
             f"<h1>{len(self.daily_log_class.logs)} {verbose} for {combobox_text}"
         )
@@ -206,7 +212,7 @@ class HomeLayout(QWidget):
 
     def change_to_stat(self):
         self.mainwindow.change_layout(self.mainwindow.stats_layout)
-        
+
 
 class DailyLogLayout(QWidget):
     def __init__(self, mainwindow):
@@ -236,9 +242,9 @@ class DailyLogLayout(QWidget):
         self.first_log_button.clicked.connect(self.first_log)
         self.last_log_button.clicked.connect(self.last_log)
         self.refresh_logs_button.clicked.connect(self.refresh_logs)
-        
+
         self.log_msg.setOverwriteMode(True)
-        
+
         self.layout.addWidget(self.hello_msg, 0, 2)
         self.layout.addWidget(self.next_log_button, 3, 2)
         self.layout.addWidget(self.prev_log_button, 3, 1)
@@ -260,7 +266,7 @@ class DailyLogLayout(QWidget):
         if self.logs[0] == 'No Logs for this year.':
             self.log_info.setText(f"<h2>Log 0/0</h2>")
         else:
-            self.log_info.setText(f"<h2>Log {self.log_index+1}/{len(self.logs)}</h2>")
+            self.log_info.setText(f"<h2>Log {self.log_index + 1}/{len(self.logs)}</h2>")
         self.log_msg.setPlainText(self.current_log)
 
     def prev_log(self):
@@ -269,7 +275,7 @@ class DailyLogLayout(QWidget):
         if self.logs[0] == 'No Logs for this year.':
             self.log_info.setText(f"<h2>Log 0/0</h2>")
         else:
-            self.log_info.setText(f"<h2>Log {self.log_index+1}/{len(self.logs)}</h2>")
+            self.log_info.setText(f"<h2>Log {self.log_index + 1}/{len(self.logs)}</h2>")
 
         self.current_log = self.logs[self.log_index]
         self.log_msg.setPlainText(self.current_log)
@@ -323,7 +329,7 @@ class DailyLogLayout(QWidget):
             verbose = "logs"
         else:
             verbose = "log"
-        
+
         self.hello_msg.setText(
             f"<h1>{len(self.logs)} {verbose} for {self.year}"
         )
@@ -375,9 +381,9 @@ class AnnualLogLayout(QWidget):
         # self.prev_log_button.clicked.connect(self.prev_log)
         # self.first_log_button.clicked.connect(self.first_log)
         # self.last_log_button.clicked.connect(self.last_log)
-        
+
         self.log_msg.setOverwriteMode(True)
-        
+
         self.layout.addWidget(self.hello_msg, 0, 2)
         self.layout.addWidget(self.next_log_button, 3, 2)
         self.layout.addWidget(self.prev_log_button, 3, 1)
@@ -387,7 +393,7 @@ class AnnualLogLayout(QWidget):
         self.layout.addWidget(self.help_button, 0, 1)
         self.layout.addWidget(self.log_msg, 1, 0, 1, 4)
         self.layout.addWidget(self.log_info, 2, 0, 1, 4)
-        
+
     def setup(self):
         self.mainwindow.setWindowTitle("Annual Log Browser")
 
@@ -422,18 +428,69 @@ class StatLayout(QWidget):
             f"({format_byte(bytes_total)})</h3>"
             f"<h3 style=\"margin-left: 200px\">{bytes_total - bytes_daily} Annual Log Bytes ({format_byte(bytes_total - bytes_daily)})<br/>"
             f"{bytes_daily} Daily Log Bytes ({format_byte(bytes_daily)})</h3>"
-            )
-        self.avg_per_log = QLabel(f"<h3>Avg. Length of Logs: {round(bytes_daily / num_entries_daily, 2)} Bytes Daily Logs<br/></h3><h3 style=\"margin-left: 205px\">{f'{round((bytes_total - bytes_daily ) / (num_entries_total - num_entries_daily), 2)}' if num_entries_total - num_entries_daily != 0 else f'N/A'} Bytes Annual Logs</h3>")
-        
+        )
+        self.avg_per_log = QLabel(
+            f"<h3>Avg. Length of Logs: {round(bytes_daily / num_entries_daily, 2)} Bytes Daily Logs<br/></h3><h3 style=\"margin-left: "
+            f"205px\">"
+            f"{f'{round((bytes_total - bytes_daily) / (num_entries_total - num_entries_daily), 2)}' if num_entries_total - num_entries_daily != 0 else f'N/A'} Bytes Annual Logs</h3> "
+        )
+
+        self.bytes_button = QPushButton(
+            "Graph for Bytes"
+        )
+
         self.home_button.clicked.connect(lambda: self.mainwindow.change_layout(self.mainwindow.home))
+        self.bytes_button.clicked.connect(lambda: self.generate_cumulative_bytes_chart(all_data))
 
         self.layout.addWidget(self.home_button, 0, 0)
         self.layout.addWidget(self.title, 1, 0)
         self.layout.addWidget(self.bytes_label, 2, 0)
         self.layout.addWidget(self.avg_per_log, 3, 0)
-        
+        self.layout.addWidget(self.bytes_button, 2, 2)
+
     def setup(self):
-        self.mainwindow.setWindowTitle("A")
+        self.mainwindow.setWindowTitle("Statistics")
+
+    def generate_cumulative_bytes_chart(
+            self,
+            data
+    ):
+        bytes_cumulative = []
+        bytes_annual_cumulative = []
+        dates = []
+        annual_dates = []
+        _num_bytes = 0
+        _num_annual_bytes = 0
+        for year, year_data in data.items():
+            for day, content in year_data.items():
+                _num_bytes += len(content)
+                bytes_cumulative.append(_num_bytes)
+                dates.append(day)
+                print(year)
+                if year == "✰ Yearly Capsule ✰":
+                    _num_annual_bytes += len(content)
+                    bytes_annual_cumulative.append(_num_annual_bytes)
+                    annual_dates.append(day)
+
+        fig, ax = plt.subplots()
+
+        annual_dates.insert(0, datetime.datetime(2021, 6, 9))
+        bytes_annual_cumulative.insert(0, 0)
+
+        ax.plot(dates, bytes_cumulative, c='blue')
+        ax.plot(annual_dates, bytes_annual_cumulative, c='red')
+
+        ax.set_title("Bytes of logs written", fontsize=24)
+        ax.set_xlabel('', fontsize=16)
+
+        fig.autofmt_xdate()
+
+        ax.set_ylabel("Num Bytes Written - Cumulative", fontsize=14)
+        ax.tick_params(axis='both', which='major', labelsize=16)
+
+        plt.show()
+
+        print(annual_dates, bytes_annual_cumulative)
 
 
 class MainWindow(QWidget):
@@ -463,7 +520,6 @@ class MainWindow(QWidget):
             l.hide()
         layout.show()
         layout.setup()
-
 
 
 if __name__ == "__main__":
