@@ -12,6 +12,7 @@ import glob
 
 import os
 import sys
+import datetime
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -34,9 +35,61 @@ all_dirs = sorted([
     i for i in os.listdir() if os.path.isdir(os.path.join(path, i)) \
                             and i != "✰ Yearly Capsule ✰"
 ])
+
+all_data = {
+    year: {
+        create_datetime: data for create_datetime, data in zip(
+            [
+                datetime.datetime.fromtimestamp(
+                    os.stat(
+                        os.path.join(year, i)
+                    ).st_ctime
+                ) for i in os.listdir(
+                    os.path.join(
+                        year
+                    )
+                )
+            ],
+            [
+                open(
+                    os.path.join(
+                        year, filepath
+                        ), encoding='latin1'
+                    ).read() for filepath in os.listdir(
+                        os.path.join(
+                            year
+                            )
+                        ) if filepath.split(
+                        '.'
+                        )[-1] not in [
+                            'png', 'jpg', 'jpeg'
+                        ] 
+                ]
+            )
+        } for year in os.listdir(
+            
+        ) if year != "✰ Yearly Capsule ✰" and os.path.isdir(
+            year
+            )
+}
+
 annual_log_dir = os.path.join(path, "✰ Yearly Capsule ✰")
 
 authorized_annual_log = {"layout": False, "text": False}
+
+
+def format_byte(size: int, decimal_places: int = 3):
+    """
+    Formats a given size and outputs a string equivalent to B, KB, MB, or GB
+    """
+    if size < 1e03:
+        return f"{round(size, decimal_places)} B"
+    if size < 1e06:
+        return f"{round(size / 1e3, decimal_places)} KB"
+    if size < 1e09:
+        return f"{round(size / 1e6, decimal_places)} MB"
+
+    return f"{round(size / 1e9, decimal_places)} GB"
 
 
 class HomeLayout(QWidget):
@@ -59,6 +112,8 @@ class HomeLayout(QWidget):
         self.annual_log_button = QPushButton("Annual Logs", self)
         self.annual_log_button_label = QLabel("<h3>Click here to view annual logs:</h3>")
         self.year_combobox = QComboBox(self)
+
+        self.stat_button = QPushButton("Stats")
         
         self.year_combobox.currentTextChanged.connect(self.change_text)
         self.daily_log_button.clicked.connect(
@@ -66,6 +121,9 @@ class HomeLayout(QWidget):
         )
         self.annual_log_button.clicked.connect(
             self.change_to_annual_log
+        )
+        self.stat_button.clicked.connect(
+            self.change_to_stat
         )
 
         self.year_combobox.addItems(all_dirs)
@@ -78,6 +136,9 @@ class HomeLayout(QWidget):
         self.layout.addWidget(self.daily_log_button, 3, 1)
         self.layout.addWidget(self.annual_log_button_label, 4, 0)
         self.layout.addWidget(self.annual_log_button, 4, 1)
+
+        # self.layout.addWidget(self.stat_label, 1, 1)
+        self.layout.addWidget(self.stat_button, 0, 1)
 
         self.setLayout(self.layout)
 
@@ -128,10 +189,6 @@ class HomeLayout(QWidget):
         self.mainwindow.change_layout(self.mainwindow.dailylog)
 
     def change_to_annual_log(self):
-        # QMessageBox.about(
-        #     self, "E",
-        #     "Not done kek"
-        # )
         if not authorized_annual_log["layout"]:
             text, ok = QInputDialog().getText(
                 self, "Password", "Enter Hex Password:"
@@ -146,6 +203,9 @@ class HomeLayout(QWidget):
                 )
         else:
             self.mainwindow.change_layout(self.mainwindow.annuallog)
+
+    def change_to_stat(self):
+        self.mainwindow.change_layout(self.mainwindow.stats_layout)
         
 
 class DailyLogLayout(QWidget):
@@ -332,6 +392,45 @@ class AnnualLogLayout(QWidget):
         self.mainwindow.setWindowTitle("Annual Log Browser")
 
 
+class StatLayout(QWidget):
+    def __init__(self, mainwindow):
+        super().__init__()
+
+        self.mainwindow = mainwindow
+
+        self.layout = QGridLayout()
+        self.setLayout(self.layout)
+
+        bytes_total = 0
+        bytes_daily = 0
+        num_entries_daily = 0
+        num_entries_total = 0
+        for year in all_data.values():
+            for day in year.values():
+                bytes_total += len(day)
+                num_entries_total += 1
+
+                if year != "✰ Yearly Capsule ✰":
+                    bytes_daily += len(day)
+                    num_entries_daily += 1
+
+        self.home_button = QPushButton("Home")
+        self.title = QLabel("<h1>Statistics for all logs</h1>")
+
+        self.bytes_label = QLabel(f"<h3>Total Bytes Written: {bytes_total} Bytes ({format_byte(bytes_total)})</h3>")
+        self.avg_per_log = QLabel(f"<h3>Avg. Length of Logs: {round(bytes_daily / num_entries_daily, 2)} Bytes Daily Logs<br/></h3><h3 style=\"margin-left: 205px\">{f'{round((bytes_total - bytes_daily ) / (num_entries_total - num_entries_daily), 2)}' if num_entries_total - num_entries_daily != 0 else f'N/A'} Bytes Annual Logs</h3>")
+        
+        self.home_button.clicked.connect(lambda: self.mainwindow.change_layout(self.mainwindow.home))
+
+        self.layout.addWidget(self.home_button, 0, 0)
+        self.layout.addWidget(self.title, 1, 0)
+        self.layout.addWidget(self.bytes_label, 2, 0)
+        self.layout.addWidget(self.avg_per_log, 3, 0)
+        
+    def setup(self):
+        self.mainwindow.setWindowTitle("A")
+
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -344,11 +443,13 @@ class MainWindow(QWidget):
         self.dailylog = DailyLogLayout(self)
         self.annuallog = AnnualLogLayout(self)
         self.home = HomeLayout(self, self.dailylog, self.annuallog)
+        self.stats_layout = StatLayout(self)
         self.layout.addWidget(self.home)
         self.layout.addWidget(self.dailylog)
         self.layout.addWidget(self.annuallog)
+        self.layout.addWidget(self.stats_layout)
 
-        self.layouts = (self.home, self.dailylog, self.annuallog)
+        self.layouts = (self.home, self.dailylog, self.annuallog, self.stats_layout)
 
         self.change_layout(self.home)
 
