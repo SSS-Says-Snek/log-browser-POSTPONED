@@ -417,7 +417,12 @@ class StatLayout(QWidget):
         self.home_button = QPushButton("Home")
         self.title = QLabel("<h1>Statistics for all logs</h1>")
 
-        self.bytes_label = QLabel(f"<h3>Total Bytes Written: {bytes_total} Bytes ({format_byte(bytes_total)})</h3>")
+        self.bytes_label = QLabel(
+            f"<h3>Total Bytes Written: {bytes_total} Bytes "
+            f"({format_byte(bytes_total)})</h3>"
+            f"<h3 style=\"margin-left: 200px\">{bytes_total - bytes_daily} Annual Log Bytes ({format_byte(bytes_total - bytes_daily)})<br/>"
+            f"{bytes_daily} Daily Log Bytes ({format_byte(bytes_daily)})</h3>"
+            )
         self.avg_per_log = QLabel(f"<h3>Avg. Length of Logs: {round(bytes_daily / num_entries_daily, 2)} Bytes Daily Logs<br/></h3><h3 style=\"margin-left: 205px\">{f'{round((bytes_total - bytes_daily ) / (num_entries_total - num_entries_daily), 2)}' if num_entries_total - num_entries_daily != 0 else f'N/A'} Bytes Annual Logs</h3>")
         
         self.home_button.clicked.connect(lambda: self.mainwindow.change_layout(self.mainwindow.home))
