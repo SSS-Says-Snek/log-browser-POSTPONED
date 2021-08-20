@@ -438,22 +438,27 @@ class StatLayout(QWidget):
         self.bytes_button = QPushButton(
             "Graph for Bytes"
         )
+        self.avg_bytes_button = QPushButton(
+            "Graph for Avg. Bytes"
+        )
 
         self.home_button.clicked.connect(lambda: self.mainwindow.change_layout(self.mainwindow.home))
         self.bytes_button.clicked.connect(lambda: self.generate_cumulative_bytes_chart(all_data))
+        self.avg_bytes_button.clicked.connect(lambda: self.generate_avg_graph(all_data))
 
         self.layout.addWidget(self.home_button, 0, 0)
         self.layout.addWidget(self.title, 1, 0)
         self.layout.addWidget(self.bytes_label, 2, 0)
         self.layout.addWidget(self.avg_per_log, 3, 0)
-        self.layout.addWidget(self.bytes_button, 2, 2)
+        self.layout.addWidget(self.bytes_button, 2, 1)
+        self.layout.addWidget(self.avg_bytes_button, 3, 1)
 
     def setup(self):
         self.mainwindow.setWindowTitle("Statistics")
 
+    @staticmethod
     def generate_cumulative_bytes_chart(
-            self,
-            data
+        data
     ):
         bytes_cumulative = []
         bytes_annual_cumulative = []
@@ -466,10 +471,11 @@ class StatLayout(QWidget):
                 _num_bytes += len(content)
                 bytes_cumulative.append(_num_bytes)
                 dates.append(day)
-                print(year)
+
                 if year == "✰ Yearly Capsule ✰":
                     _num_annual_bytes += len(content)
                     bytes_annual_cumulative.append(_num_annual_bytes)
+
                     annual_dates.append(day)
 
         fig, ax = plt.subplots()
@@ -484,13 +490,47 @@ class StatLayout(QWidget):
         ax.set_xlabel('', fontsize=16)
 
         fig.autofmt_xdate()
+        ax.legend(["Cumulative Bytes Written (Daily Logs)", "(Cumulative Bytes Written (Annual Logs)"])
+        # ax.set_yticklabels(["0 KB"] + [f"{int(i / 1000)} KB" for i in range(0, max(bytes_cumulative), 10000)])
+        # help(ax.set_yticklabels)
 
         ax.set_ylabel("Num Bytes Written - Cumulative", fontsize=14)
         ax.tick_params(axis='both', which='major', labelsize=16)
 
         plt.show()
 
-        print(annual_dates, bytes_annual_cumulative)
+    @staticmethod
+    def generate_avg_graph(data):
+        bytes_daily = []
+        bytes_avg_total = []
+        dates = []
+
+        for year_data in data.values():
+            for day, content in year_data.items():
+                bytes_daily.append(len(content))
+
+                if len(bytes_avg_total) > 0:
+                    bytes_avg_total.append((len(content) + sum(bytes_avg_total)) / (len(bytes_avg_total) + 1))
+                else:
+                    bytes_avg_total.append(len(content))
+
+                dates.append(day)
+
+        fig, ax = plt.subplots()
+
+        ax.plot(dates, bytes_daily, c='red')
+        ax.plot(dates, bytes_avg_total, c='blue')
+
+        ax.set_title("Average Number of Bytes Written Daily")
+        ax.set_xlabel('', fontsize=16)
+
+        fig.autofmt_xdate()
+        ax.legend(["Bytes Written Per Day", "Average Bytes Written Per Day"])
+
+        ax.set_ylabel("Bytes Written Per Day", fontsize=14)
+        ax.tick_params(axis='both', which='major', labelsize=16)
+
+        plt.show()
 
 
 class MainWindow(QWidget):
