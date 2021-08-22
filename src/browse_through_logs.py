@@ -8,8 +8,6 @@ Version 0.1
 Age: 13
 """
 
-import glob
-
 import os
 import sys
 import datetime
@@ -23,7 +21,6 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QMessageBox,
     QInputDialog,
-    QLineEdit
 )
 
 from PyQt5.QtWidgets import QGridLayout, QVBoxLayout
